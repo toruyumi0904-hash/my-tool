@@ -1,0 +1,47 @@
+name: ビルド（Windows・Mac）
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: ライブラリをインストール
+        run: pip install python-pptx lxml pyinstaller
+      - name: .exe をビルド
+        run: python -m PyInstaller -y "PPT変換ツール.spec"
+      - name: アップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: PPT変換ツール-Windows
+          path: dist/PPT変換ツール.exe
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: ライブラリをインストール
+        run: pip install python-pptx lxml pyinstaller
+      - name: .app をビルド
+        run: python -m PyInstaller -y "PPT変換ツール.spec"
+      - name: 署名
+        run: |
+          xattr -rc dist/PPT変換ツール.app
+          codesign --force --deep --sign - dist/PPT変換ツール.app
+      - name: zip 圧縮
+        run: cd dist && zip -r PPT変換ツール-Mac.zip PPT変換ツール.app
+      - name: アップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: PPT変換ツール-Mac
+          path: dist/PPT変換ツール-Mac.zip
